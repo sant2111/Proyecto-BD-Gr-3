@@ -1,0 +1,15 @@
+# Volúmenes y datos locales de PostgreSQL y pgAdmin
+postgres_data/
+pgadmin_data/
+*.log
+
+# Archivos del sistema operativo y editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Respaldos y archivos comprimidos
+*.rar
+*.zip
+*.tar.gz

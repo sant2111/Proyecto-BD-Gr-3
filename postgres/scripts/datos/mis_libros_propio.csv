@@ -1,0 +1,9 @@
+isbn,titulo,autor,categoria,anio_publicacion,ejemplares_disponibles
+9789580000001,Rayuela,Julio Cortazar,Novela,1963,4
+9789580000002,Ficciones,Jorge Luis Borges,Cuento,1944,2
+9789580000003,La Voragine,Jose Eustasio Rivera,Novela,1924,5
+9789580000004,El Tunel,Ernesto Sabato,Novela,1948,1
+9789580000005,Pedro Paramo,Juan Rulfo,Novela,1955,3
+9789580000006,Libro Futuro,Autor Prueba,Novela,2030,2
+9789580000007;Libro con Punto y Coma;Autor Prueba;Novela;2020;1
+9789580000001,Rayuela Duplicada,Julio Cortazar,Novela,1963,2
