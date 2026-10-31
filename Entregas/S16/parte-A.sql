@@ -46,9 +46,38 @@ ORDER BY total_pedidos DESC;
 
 --Punto 7
 
+SELECT p1.nombre, p1.categoria, p1.precio
+FROM producto p1
+WHERE p1.precio > (
+    SELECT AVG(p2.precio)
+    FROM producto p2
+    WHERE p2.categoria = p1.categoria
+);
+
 --Punto 8
 
+SELECT c.nombre, c.ciudad
+FROM cliente c
+WHERE c.ciudad = 'Cali' 
+  AND EXISTS (
+      SELECT 1
+      FROM pedido ped
+      JOIN detalle det ON ped.id_pedido = det.id_pedido
+      JOIN producto prod ON det.id_producto = prod.id_producto
+      WHERE ped.id_cliente = c.id_cliente
+        AND prod.categoria = 'Accesorio'
+        AND ped.estado != 'cancelado'
+  );
+
 --Punto 9
+
+SELECT c1.nombre
+FROM cliente c1
+WHERE NOT EXISTS (
+    SELECT 1 
+    FROM cliente c2 
+    WHERE c2.referido_por = c1.id_cliente
+);
 
 --Punto 10
 
