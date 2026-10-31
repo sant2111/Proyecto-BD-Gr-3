@@ -27,6 +27,19 @@ CREATE TABLE usuario (
     telefono    varchar(255)
 );
 
+CREATE TABLE lector (
+    documento VARCHAR(15) PRIMARY KEY
+        CHECK (documento ~ '^[0-9]{6,15}$'),
+    nombres VARCHAR(100) NOT NULL
+        CHECK (nombres <> ''),
+    apellidos VARCHAR(100) NOT NULL
+        CHECK (apellidos <> ''),
+    correo VARCHAR(255) NOT NULL UNIQUE
+        CHECK (correo ~ '^[^@ ]+@[^@ ]+[.][^@ ]+$'),
+    telefono VARCHAR(15) NOT NULL
+        CHECK (telefono ~ '^[0-9]{7,15}$')
+);
+
 CREATE TABLE ejemplar (
     isbn         varchar(13) REFERENCES libro(isbn) ON DELETE CASCADE,
     id_ejemplar  integer,
@@ -35,13 +48,14 @@ CREATE TABLE ejemplar (
 );
 
 CREATE TABLE prestamo (
-    id_prestamo     integer PRIMARY KEY,
-    id_rol          integer NOT NULL REFERENCES rol(id_rol),
+    id_prestamo     serial PRIMARY KEY,
+    documento varchar(15) NOT NULL REFERENCES lector(documento),
     isbn            varchar(13) NOT NULL,
     id_ejemplar     integer NOT NULL,
     fecha_prestamo  date NOT NULL,
     fecha_limite    date NOT NULL,
-    estado          varchar(255) NOT NULL,
+    fecha_devolucion date,
+    estado          varchar(50) NOT NULL,
     FOREIGN KEY (isbn, id_ejemplar) REFERENCES ejemplar(isbn, id_ejemplar)
 );
 
@@ -73,20 +87,7 @@ CREATE TABLE stg_libro (
     motivo                  text
 );
 
--- 4. TABLAS DE LECTORES Y TABLA DE PASO
-
-CREATE TABLE lector (
-    documento VARCHAR(15) PRIMARY KEY
-        CHECK (documento ~ '^[0-9]{6,15}$'),
-    nombres VARCHAR(100) NOT NULL
-        CHECK (nombres <> ''),
-    apellidos VARCHAR(100) NOT NULL
-        CHECK (apellidos <> ''),
-    correo VARCHAR(255) NOT NULL UNIQUE
-        CHECK (correo ~ '^[^@ ]+@[^@ ]+[.][^@ ]+$'),
-    telefono VARCHAR(15) NOT NULL
-        CHECK (telefono ~ '^[0-9]{7,15}$')
-);
+-- 4. TABLA DE PASO LECTORES
 
 CREATE TABLE stg_lector (
     linea_csv INTEGER,
