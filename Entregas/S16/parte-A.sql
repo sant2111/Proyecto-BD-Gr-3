@@ -16,9 +16,29 @@ WHERE p.id_pedido = 1003;
 
 --Punto 2
 
+SELECT
+    c.nombre AS cliente,
+    r.nombre AS recomendado_por
+FROM cliente c
+         LEFT JOIN cliente r ON c.referido_por = r.id_cliente;
+
 --Punto 3
 
+SELECT
+    p.nombre AS producto
+FROM producto p
+         LEFT JOIN detalle d ON p.id_producto = d.id_producto
+WHERE d.id_producto IS NULL;
+
 --Punto 4
+
+SELECT
+    c.nombre,
+    COUNT(p.id_pedido) AS total_pedidos
+FROM cliente c
+         LEFT JOIN pedido p ON c.id_cliente = p.id_cliente
+GROUP BY c.id_cliente, c.nombre
+ORDER BY total_pedidos DESC;
 
 --Punto 5
 
