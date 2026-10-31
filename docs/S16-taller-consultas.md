@@ -86,7 +86,7 @@ Las fechas se escriben relativas a `CURRENT_DATE` (`CURRENT_DATE - 30`), igual q
 ## Mecánica (2 horas)
 
 1. **(10 min) Encuadre.** El profesor construye en vivo, por capas (sección 2), el ejercicio 5 de la parte A, mostrando el conteo de filas en cada paso. Termina con una pregunta: ¿qué pasa con el resultado si se olvida el filtro de cancelados? (Respuesta: los totales suben y **Accesorio** pasa al primer lugar, por el molino y la prensa de los pedidos cancelados.)
-2. **(50 min) Parte A: ejercicios sobre `tienda`.** En parejas dentro del grupo; todo el grupo entrega un solo archivo `parte-a.sql` con las 11 consultas. Cada ejercicio trae el número de filas esperado para que la pareja se autocorrija: si no coincide, la consulta está mal (aunque "se vea bien"). El profesor y el monitor circulan por las salas.
+2. **(50 min) Parte A: ejercicios sobre `tienda`.** En parejas dentro del grupo; todo el grupo entrega un solo archivo `parte-A.sql` con las 11 consultas. Cada ejercicio trae el número de filas esperado para que la pareja se autocorrija: si no coincide, la consulta está mal (aunque "se vea bien"). El profesor y el monitor circulan por las salas.
 3. **(10 min) Puesta en común.** Dos grupos comparten pantalla: uno con el ejercicio 9 (la trampa de `NOT IN`) y otro con el 11 (la división), explicando por qué su consulta es correcta.
 4. **(40 min) Parte B: los cuatro reportes sobre el esquema propio.**
    - Escribir `datos-prueba.sql` con los préstamos (y lo que haga falta: ejemplares, devoluciones) que cubren los 8 casos de la sección 4, y anotar **antes de correr nada** qué debe devolver cada reporte.
@@ -133,7 +133,7 @@ Para la API de M7 conviene, aunque no se exige hoy, dejar cada reporte guardado 
 
 **Por grupo**, subido después de terminar la sesión (y en el repositorio del grupo, que es lo que se revisa en el Hito 2):
 
-1. `parte-a.sql`: las 11 consultas de la parte A, cada una con un comentario con su número y, en la 9, la explicación.
+1. `parte-A.sql`: las 11 consultas de la parte A, cada una con un comentario con su número y, en la 9, la explicación.
 2. `datos-prueba.sql` y `reportes.sql` (parte B), en `postgres/scripts/`.
 3. Una tabla de verificación de la parte B, con una fila por caso de la sección 4: caso, resultado esperado, resultado obtenido y, si no coincidieron, qué se corrigió.
 4. La salida de `psql` (texto o captura) de los cuatro reportes con los datos de prueba.
