@@ -41,9 +41,27 @@ GROUP BY c.id_cliente, c.nombre
 ORDER BY total_pedidos DESC;
 
 --Punto 5
-
+SELECT
+    pr.categoria,
+    SUM(d.cantidad * d.precio_unitario) AS total_vendido
+FROM tienda.pedido p
+JOIN tienda.detalle d ON d.id_pedido = p.id_pedido
+JOIN tienda.producto pr ON pr.id_producto = d.id_producto
+WHERE p.estado <> 'cancelado'
+GROUP BY pr.categoria
+ORDER BY total_vendido DESC;
 --Punto 6
-
+SELECT
+    EXTRACT(MONTH FROM p.fecha)::integer AS mes,
+    SUM(d.cantidad * d.precio_unitario) AS total_vendido
+FROM tienda.pedido p
+JOIN tienda.detalle d ON d.id_pedido = p.id_pedido
+WHERE p.estado <> 'cancelado'
+  AND p.fecha >= DATE '2026-01-01'
+  AND p.fecha < DATE '2027-01-01'
+GROUP BY EXTRACT(MONTH FROM p.fecha)
+HAVING SUM(d.cantidad * d.precio_unitario) > 200000
+ORDER BY mes;
 --Punto 7
 
 SELECT p1.nombre, p1.categoria, p1.precio
