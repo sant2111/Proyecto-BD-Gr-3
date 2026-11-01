@@ -12,7 +12,7 @@ GROUP BY l.isbn, l.titulo
 ORDER BY total_prestamos DESC
 FETCH FIRST 3 ROWS WITH TIES;
 
-====================================================================================================================================================
+
     
 --Punto 2 Lectores con más libros leídos 
 WITH conteo_lecturas AS (
@@ -32,7 +32,7 @@ SELECT
 FROM conteo_lecturas
 WHERE total_leidos = (SELECT MAX(total_leidos) FROM conteo_lecturas);
 
-====================================================================================================================================================
+
 SET search_path TO biblioteca;
 
 -- REPORTE 3: LECTORES MOROSOS
@@ -55,7 +55,7 @@ WHERE EXISTS (
 )
 ORDER BY l.apellidos, l.nombres;
 
-====================================================================================================================================================
+
 
 SET search_path TO biblioteca;
 
