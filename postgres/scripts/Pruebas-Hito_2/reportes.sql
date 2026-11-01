@@ -83,5 +83,5 @@ INNER JOIN libro li
 WHERE p.fecha_devolucion IS NULL
   AND p.fecha_limite < CURRENT_DATE
 ORDER BY dias_mora DESC;
-ORDER BY dias_mora DESC;
+
 
