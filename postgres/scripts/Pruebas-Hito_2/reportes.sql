@@ -77,9 +77,11 @@ INNER JOIN lector l
     ON p.documento = l.documento
 INNER JOIN ejemplar e
     ON p.id_ejemplar = e.id_ejemplar
+   AND p.isbn = e.isbn
 INNER JOIN libro li
     ON e.isbn = li.isbn
 WHERE p.fecha_devolucion IS NULL
   AND p.fecha_limite < CURRENT_DATE
+ORDER BY dias_mora DESC;
 ORDER BY dias_mora DESC;
 
