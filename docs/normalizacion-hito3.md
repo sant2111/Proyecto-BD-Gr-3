@@ -50,10 +50,26 @@ normalizacion.sql ejecutó BEGIN, bloqueó las tablas, copió datos a tablas tem
 Se actualizó 01_esquema.sql y se ejecutó en biblioteca_hito3_prueba, creada aparte. Las cargas aceptaron 20 lectores y 32 libros sin rechazos, generaron 94 copias y los datos de prueba insertaron 15 préstamos sin borrar el inventario. Los cuatro reportes devolvieron 4 libros (empate incluido), 2 lectores más activos, 3 morosos y 4 préstamos vencidos. La comparación antes y después confirmó que los cuatro reportes conservaron su contenido.
 
 ## 5. Decisiones de desnormalización
-No se conservan derivados redundantes en las tablas de negocio. libro_disponibilidad calcula copias totales menos préstamos abiertos; prestamo_con_estado calcula devuelto, en mora o activo con CASE y CURRENT_DATE. El índice parcial garantiza como máximo un préstamo abierto por copia. La verificación `SELECT sum(ejemplares),sum(prestados),sum(disponibles),count(*) FILTER (WHERE disponibles<0) FROM biblioteca.libro_disponibilidad;` devolvió 94, 6, 88 y 0. `SELECT estado,count(*) FROM biblioteca.prestamo_con_estado GROUP BY estado;` devolvió 2 activos, 9 devueltos y 4 en mora en la migración. No se requieren triggers para estos derivados. Se conserva fecha_limite como dato histórico del plazo pactado, pues puede haber cambios o excepciones al plazo de 14 días. Se mantienen lector y usuario separados porque no se ha establecido una regla de identidad común.
+**Decisión: no se desnormaliza nada.** Los dos datos derivados que existían se calculan en vistas y no se guardan. No se midió rendimiento porque no hay una consulta lenta que justifique guardar una copia (con 94 copias y 15 préstamos, no la habría), y sin copia guardada no hay nada que pueda desincronizarse ni triggers que mantener.
+
+| Dato | Decisión | Cómo se obtiene | Consulta de verificación y resultado |
+|---|---|---|---|
+| Disponibilidad por libro (antes `libro.ejemplares_disponibles`) | Se calcula | Vista `libro_disponibilidad`: copias menos préstamos abiertos | `SELECT sum(ejemplares), sum(prestados), sum(disponibles), count(*) FILTER (WHERE disponibles<0) FROM biblioteca.libro_disponibilidad;` → 94, 6, 88 y 0 |
+| Estado del préstamo (antes `prestamo.estado`) | Se calcula | Vista `prestamo_con_estado`: `CASE` sobre las fechas y `CURRENT_DATE` | `SELECT estado, count(*) FROM biblioteca.prestamo_con_estado GROUP BY estado;` → 2 activos, 9 devueltos, 4 en mora |
+
+Reglas que mantienen la integridad sin copias guardadas: el índice único parcial `prestamo_abierto_uk` permite como máximo un préstamo abierto por copia, y el `CHECK` `prestamo_fechas_ck` impide fechas incoherentes.
+
+Dos casos que parecen redundancia y no lo son:
+- **`fecha_limite`** se conserva: es un dato histórico del plazo pactado en cada préstamo, y la biblioteca puede cambiar el plazo de 14 días o dar plazos especiales (S20, A5). Su determinante es el préstamo, no el estado actual del catálogo, así que es correcto en 3FN.
+- **`lector` y `usuario`** se mantienen separados: comparten correo y teléfono (E3), pero no hay una regla de negocio que diga que son la misma persona.
 
 ## 6. Esquema después
-Se conservan las seis tablas de negocio y sus FK, eliminando ejemplares_disponibles de libro y estado de prestamo; rol incorpora tipo_rol UNIQUE. Se agregan las dos vistas y las restricciones descritas. Las seis tablas y rechazo_carga quedan en FNBC bajo las DF identificadas; no se identificó una tabla de negocio que quede solamente en 3FN. Las tablas de paso permanecen como estructuras auxiliares. La evidencia de ejecución está en la carpeta evidencias (salidas `.txt` reales).
+- **Tablas de negocio (6):** libro, rol, usuario, lector, ejemplar y prestamo, con las mismas FK de antes.
+- **Columnas eliminadas:** `libro.ejemplares_disponibles` y `prestamo.estado`.
+- **Restricciones nuevas:** `rol.tipo_rol` UNIQUE, `prestamo_fechas_ck` e índice único parcial `prestamo_abierto_uk`.
+- **Vistas nuevas:** `libro_disponibilidad` y `prestamo_con_estado`.
+- **Forma normal:** las seis tablas de negocio y rechazo_carga quedan en FNBC bajo las DF identificadas; ninguna queda solo en 3FN. Las tablas de paso (stg_linea, stg_libro, stg_lector) son auxiliares del proceso de carga y quedan fuera del análisis.
+- **Evidencia:** salidas reales en la carpeta `evidencias/` (`.txt`).
 
 ### Comparación antes y después de la normalización
 
