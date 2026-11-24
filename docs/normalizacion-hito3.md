@@ -23,11 +23,11 @@ Las DF se justifican por la regla de negocio y por las claves/UNIQUE del esquema
 | rol | FNBC | `tipo_rol` sin UNIQUE permitía roles duplicados | FNBC con `tipo_rol` UNIQUE |
 | usuario | FNBC | Ninguno; comparte correo/teléfono con lector pero no se prueba que sea la misma persona (E3) | FNBC |
 | lector | FNBC | Ninguno | FNBC |
-| ejemplar | FNBC | Ninguno (F2); faltaban 80 copias que el stock decía tener (E1c) | FNBC |
-| prestamo | FNBC | `estado` es derivado de fechas y del día de consulta (E2); faltaba impedir dos préstamos abiertos sobre una copia (E4) | FNBC, sin `estado` |
+| ejemplar | FNBC | Ninguno (F2); diferencia de 80 copias bajo el supuesto de inventario total (E1c) | FNBC |
+| prestamo | 2FN (con fecha de referencia fija) | `estado` es derivado de fechas y del día de consulta (E2); faltaba impedir dos préstamos abiertos sobre una copia (E4) | FNBC, sin `estado` |
 | rechazo_carga | FNBC | Ninguno | FNBC |
 
-Para una fecha de referencia fija, (fecha_limite, fecha_devolucion) determina estado, por lo que no debe persistirse. La repetición de categorías como texto no prueba una violación de 3FN (E5c). Las tablas de paso (stg_*) quedan fuera del análisis por ser auxiliares de ETL.
+Para una fecha de referencia fija, (fecha_limite, fecha_devolucion) determina estado. Como el determinante no es una superclave y estado no es un atributo primo, bajo esta interpretación se incumplen 3FN y FNBC. Además, el estado cambia con el tiempo, por lo que se calcula mediante una vista. La repetición de categorías como texto no prueba una violación de 3FN (E5c). Las tablas de paso (stg_*) quedan fuera del análisis por ser auxiliares de ETL.
 
 | Consulta en evidencia.sql | Resultado antes |
 |---|---|
@@ -38,7 +38,7 @@ Para una fecha de referencia fija, (fecha_limite, fecha_devolucion) determina es
 | E5a–c: GROUP BY autor, tipo y categoría | 0 autores con varias categorías en la muestra; 14 copias físicas; 9 categorías. |
 
 ## 4. Cambios y migración
-normalizacion.sql ejecutó BEGIN, bloqueó las tablas, copió datos a tablas temporales, generó 80 copias faltantes y verificó los registros originales con EXCEPT antes de eliminar las columnas derivadas. Se interpretó el stock semilla como total de copias físicas (supuesto de migración). Se eligió «total» y no «disponibles» porque el valor guardado era inconsistente con la otra lectura: *Cien años de soledad* tenía 3 copias y 1 préstamo abierto pero stock 4, de modo que «disponibles» implicaría 5 copias y «total» implica 4, la lectura que genera menos copias inventadas; las 80 copias generadas se marcan como tipo 'Físico' y pueden corregirse si el grupo conoce el inventario real. Se agregó unicidad de tipo_rol, control de fechas e índice único parcial para impedir dos préstamos abiertos sobre una copia. Las cuatro verificaciones de pérdida, modificación o stock no reconciliado dieron 0; terminó con COMMIT.
+normalizacion.sql ejecutó BEGIN, bloqueó las tablas, copió los datos a temporales y generó 80 ejemplares de prueba. Se interpretó el stock semilla como inventario total: 94 unidades frente a 14 copias registradas. Para Cien años de soledad, 3 copias y 1 préstamo abierto frente a stock 4 implicarían 5 copias si el stock fuera disponible, o 4 si fuera total. Se eligió la segunda lectura para minimizar los registros generados. Las 80 copias se marcaron como Físico; no son copias verificadas y en producción requieren validación del inventario. Se verificaron los registros originales con EXCEPT antes de eliminar los derivados, se añadieron unicidad de rol, control de fechas e índice único parcial. Las cuatro verificaciones dieron 0 y se ejecutó COMMIT.
 
 | Tabla | Antes | Después | Base nueva con pruebas |
 |---|---:|---:|---:|
@@ -50,26 +50,10 @@ normalizacion.sql ejecutó BEGIN, bloqueó las tablas, copió datos a tablas tem
 Se actualizó 01_esquema.sql y se ejecutó en biblioteca_hito3_prueba, creada aparte. Las cargas aceptaron 20 lectores y 32 libros sin rechazos, generaron 94 copias y los datos de prueba insertaron 15 préstamos sin borrar el inventario. Los cuatro reportes devolvieron 4 libros (empate incluido), 2 lectores más activos, 3 morosos y 4 préstamos vencidos. La comparación antes y después confirmó que los cuatro reportes conservaron su contenido.
 
 ## 5. Decisiones de desnormalización
-**Decisión: no se desnormaliza nada.** Los dos datos derivados que existían se calculan en vistas y no se guardan. No se midió rendimiento porque no hay una consulta lenta que justifique guardar una copia (con 94 copias y 15 préstamos, no la habría), y sin copia guardada no hay nada que pueda desincronizarse ni triggers que mantener.
-
-| Dato | Decisión | Cómo se obtiene | Consulta de verificación y resultado |
-|---|---|---|---|
-| Disponibilidad por libro (antes `libro.ejemplares_disponibles`) | Se calcula | Vista `libro_disponibilidad`: copias menos préstamos abiertos | `SELECT sum(ejemplares), sum(prestados), sum(disponibles), count(*) FILTER (WHERE disponibles<0) FROM biblioteca.libro_disponibilidad;` → 94, 6, 88 y 0 |
-| Estado del préstamo (antes `prestamo.estado`) | Se calcula | Vista `prestamo_con_estado`: `CASE` sobre las fechas y `CURRENT_DATE` | `SELECT estado, count(*) FROM biblioteca.prestamo_con_estado GROUP BY estado;` → 2 activos, 9 devueltos, 4 en mora |
-
-Reglas que mantienen la integridad sin copias guardadas: el índice único parcial `prestamo_abierto_uk` permite como máximo un préstamo abierto por copia, y el `CHECK` `prestamo_fechas_ck` impide fechas incoherentes.
-
-Dos casos que parecen redundancia y no lo son:
-- **`fecha_limite`** se conserva: es un dato histórico del plazo pactado en cada préstamo, y la biblioteca puede cambiar el plazo de 14 días o dar plazos especiales (S20, A5). Su determinante es el préstamo, no el estado actual del catálogo, así que es correcto en 3FN.
-- **`lector` y `usuario`** se mantienen separados: comparten correo y teléfono (E3), pero no hay una regla de negocio que diga que son la misma persona.
+No se conservan derivados redundantes en las tablas de negocio. libro_disponibilidad calcula copias totales menos préstamos abiertos; prestamo_con_estado calcula devuelto, en mora o activo con CASE y CURRENT_DATE. El índice parcial garantiza como máximo un préstamo abierto por copia. La verificación `SELECT sum(ejemplares),sum(prestados),sum(disponibles),count(*) FILTER (WHERE disponibles<0) FROM biblioteca.libro_disponibilidad;` devolvió 94, 6, 88 y 0. `SELECT estado,count(*) FROM biblioteca.prestamo_con_estado GROUP BY estado;` devolvió 2 activos, 9 devueltos y 4 en mora en la migración. No se requieren triggers para estos derivados. Se conserva fecha_limite como dato histórico del plazo pactado, pues puede haber cambios o excepciones al plazo de 14 días. Se mantienen lector y usuario separados porque no se ha establecido una regla de identidad común.
 
 ## 6. Esquema después
-- **Tablas de negocio (6):** libro, rol, usuario, lector, ejemplar y prestamo, con las mismas FK de antes.
-- **Columnas eliminadas:** `libro.ejemplares_disponibles` y `prestamo.estado`.
-- **Restricciones nuevas:** `rol.tipo_rol` UNIQUE, `prestamo_fechas_ck` e índice único parcial `prestamo_abierto_uk`.
-- **Vistas nuevas:** `libro_disponibilidad` y `prestamo_con_estado`.
-- **Forma normal:** las seis tablas de negocio y rechazo_carga quedan en FNBC bajo las DF identificadas; ninguna queda solo en 3FN. Las tablas de paso (stg_linea, stg_libro, stg_lector) son auxiliares del proceso de carga y quedan fuera del análisis.
-- **Evidencia:** salidas reales en la carpeta `evidencias/` (`.txt`).
+Se conservan las seis tablas de negocio y sus FK, eliminando ejemplares_disponibles de libro y estado de prestamo; rol incorpora tipo_rol UNIQUE. Se agregan las dos vistas y las restricciones descritas. Las seis tablas y rechazo_carga quedan en FNBC bajo las DF identificadas; no se identificó una tabla de negocio que quede solamente en 3FN. Las tablas de paso permanecen como estructuras auxiliares. La evidencia de ejecución está en la carpeta evidencias (salidas `.txt` reales).
 
 ### Comparación antes y después de la normalización
 
@@ -82,4 +66,4 @@ Se restauró el respaldo original en una base independiente y se ejecutaron los 
 | Lectores morosos | 3 | 3 |
 | Préstamos vencidos | 4 | 4 |
 
-Los cuatro reportes conservaron el mismo contenido. La única diferencia fue el orden de presentación de dos lectores empatados, lo cual no afecta los resultados.
+Los cuatro reportes conservaron el mismo contenido. Las salidas guardadas en las evidencias 06 y 07 coinciden exactamente.
