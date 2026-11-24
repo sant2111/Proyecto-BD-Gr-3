@@ -73,6 +73,9 @@ INSERT INTO libro (
 SELECT isbn, titulo, autor, categoria, anio_publicacion
 FROM tmp_libros_cargar;
 
+-- Nota (Hito 3): la columna del CSV / stg_libro 'ejemplares_disponibles' se interpreta como
+-- NUMERO TOTAL DE COPIAS fisicas; aqui se generan esas filas en ejemplar. La disponibilidad
+-- real se calcula en la vista libro_disponibilidad.
 INSERT INTO ejemplar (isbn,id_ejemplar,tipo)
 SELECT l.isbn,g.id,'Físico' FROM tmp_libros_cargar l CROSS JOIN LATERAL generate_series(1,l.ejemplares_disponibles) AS g(id);
 

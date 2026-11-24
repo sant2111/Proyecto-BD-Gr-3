@@ -81,7 +81,7 @@ CREATE TABLE stg_libro (
     autor                   text,
     categoria               text,
     anio_publicacion        text,
-    ejemplares_disponibles  text,
+    ejemplares_disponibles  text,   -- columna del CSV: se interpreta como total de copias (ver carga-libros.sql)
     motivo                  text
 );
 

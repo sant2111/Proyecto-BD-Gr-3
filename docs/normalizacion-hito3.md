@@ -14,10 +14,20 @@ El modelo original tiene seis tablas de negocio: libro (ISBN, título, autor, ca
 | prestamo | id_prestamo | Identifica lector, copia y fechas de la operación. El estado se deduce de las fechas y del día de consulta. |
 | rechazo_carga | id | Identifica el evento de rechazo y sus detalles. |
 
-No se presupone autor → categoría ni una clave alternativa para préstamos sin una regla que la garantice. Las tablas de paso reciben datos crudos, incluso inválidos; no se les impone una clave candidata de negocio. Su contenido se procesa y no constituye el catálogo definitivo.
+Las DF se justifican por la regla de negocio y por las claves/UNIQUE del esquema; los datos solo sirven para refutar (consultas F1–F6 de `evidencia_df.sql`, resultados en `evidencias/08_dependencias.txt`). Se refutó (isbn, id_ejemplar) → documento en préstamo (F4: la copia 1 de *Cien años de soledad* pasó por dos lectores), por eso la clave de préstamo es id_prestamo. No se presupone autor → categoría ni una clave alternativa para préstamos sin una regla que la garantice. Las tablas de paso reciben datos crudos, incluso inválidos; no se les impone una clave candidata de negocio. Su contenido se procesa y no constituye el catálogo definitivo.
 
 ## 3. Formas normales y evidencias
-Libro, rol, usuario, lector, ejemplar y rechazo_carga cumplen FNBC respecto de las DF de negocio identificadas, salvo la redundancia derivada analizada en préstamo: para una fecha de referencia fija, (fecha_limite, fecha_devolucion) determina estado, por lo que este no debe persistirse. Libro cumple las DF internas indicadas, pero su disponibilidad duplica información de otras tablas. La repetición de categorías no prueba una violación de 3FN. Las tablas de paso quedan fuera de la normalización del modelo de negocio por su propósito ETL.
+| Tabla | Forma normal (antes) | Problema encontrado | Forma normal (después) |
+|---|---|---|---|
+| libro | FNBC en sus DF internas | `ejemplares_disponibles` es un dato derivado (copias menos préstamos abiertos) que ya estaba desfasado: E1 | FNBC, sin la columna |
+| rol | FNBC | `tipo_rol` sin UNIQUE permitía roles duplicados | FNBC con `tipo_rol` UNIQUE |
+| usuario | FNBC | Ninguno; comparte correo/teléfono con lector pero no se prueba que sea la misma persona (E3) | FNBC |
+| lector | FNBC | Ninguno | FNBC |
+| ejemplar | FNBC | Ninguno (F2); faltaban 80 copias que el stock decía tener (E1c) | FNBC |
+| prestamo | FNBC | `estado` es derivado de fechas y del día de consulta (E2); faltaba impedir dos préstamos abiertos sobre una copia (E4) | FNBC, sin `estado` |
+| rechazo_carga | FNBC | Ninguno | FNBC |
+
+Para una fecha de referencia fija, (fecha_limite, fecha_devolucion) determina estado, por lo que no debe persistirse. La repetición de categorías como texto no prueba una violación de 3FN (E5c). Las tablas de paso (stg_*) quedan fuera del análisis por ser auxiliares de ETL.
 
 | Consulta en evidencia.sql | Resultado antes |
 |---|---|
@@ -28,7 +38,7 @@ Libro, rol, usuario, lector, ejemplar y rechazo_carga cumplen FNBC respecto de l
 | E5a–c: GROUP BY autor, tipo y categoría | 0 autores con varias categorías en la muestra; 14 copias físicas; 9 categorías. |
 
 ## 4. Cambios y migración
-normalizacion.sql ejecutó BEGIN, bloqueó las tablas, copió datos a tablas temporales, generó 80 copias faltantes y verificó los registros originales con EXCEPT antes de eliminar las columnas derivadas. Se interpretó el stock semilla como total de copias físicas (supuesto de migración). Se agregó unicidad de tipo_rol, control de fechas e índice único parcial para impedir dos préstamos abiertos sobre una copia. Las cuatro verificaciones de pérdida, modificación o stock no reconciliado dieron 0; terminó con COMMIT.
+normalizacion.sql ejecutó BEGIN, bloqueó las tablas, copió datos a tablas temporales, generó 80 copias faltantes y verificó los registros originales con EXCEPT antes de eliminar las columnas derivadas. Se interpretó el stock semilla como total de copias físicas (supuesto de migración). Se eligió «total» y no «disponibles» porque el valor guardado era inconsistente con la otra lectura: *Cien años de soledad* tenía 3 copias y 1 préstamo abierto pero stock 4, de modo que «disponibles» implicaría 5 copias y «total» implica 4, la lectura que genera menos copias inventadas; las 80 copias generadas se marcan como tipo 'Físico' y pueden corregirse si el grupo conoce el inventario real. Se agregó unicidad de tipo_rol, control de fechas e índice único parcial para impedir dos préstamos abiertos sobre una copia. Las cuatro verificaciones de pérdida, modificación o stock no reconciliado dieron 0; terminó con COMMIT.
 
 | Tabla | Antes | Después | Base nueva con pruebas |
 |---|---:|---:|---:|
@@ -43,11 +53,11 @@ Se actualizó 01_esquema.sql y se ejecutó en biblioteca_hito3_prueba, creada ap
 No se conservan derivados redundantes en las tablas de negocio. libro_disponibilidad calcula copias totales menos préstamos abiertos; prestamo_con_estado calcula devuelto, en mora o activo con CASE y CURRENT_DATE. El índice parcial garantiza como máximo un préstamo abierto por copia. La verificación `SELECT sum(ejemplares),sum(prestados),sum(disponibles),count(*) FILTER (WHERE disponibles<0) FROM biblioteca.libro_disponibilidad;` devolvió 94, 6, 88 y 0. `SELECT estado,count(*) FROM biblioteca.prestamo_con_estado GROUP BY estado;` devolvió 2 activos, 9 devueltos y 4 en mora en la migración. No se requieren triggers para estos derivados. Se conserva fecha_limite como dato histórico del plazo pactado, pues puede haber cambios o excepciones al plazo de 14 días. Se mantienen lector y usuario separados porque no se ha establecido una regla de identidad común.
 
 ## 6. Esquema después
-Se conservan las seis tablas de negocio y sus FK, eliminando ejemplares_disponibles de libro y estado de prestamo; rol incorpora tipo_rol UNIQUE. Se agregan las dos vistas y las restricciones descritas. Las seis tablas y rechazo_carga quedan en FNBC bajo las DF identificadas; no se identificó una tabla de negocio que quede solamente en 3FN. Las tablas de paso permanecen como estructuras auxiliares. La evidencia de ejecución se adjunta en la carpeta evidencias; los extractos visuales se identifican como reconstrucciones de la salida compartida.
+Se conservan las seis tablas de negocio y sus FK, eliminando ejemplares_disponibles de libro y estado de prestamo; rol incorpora tipo_rol UNIQUE. Se agregan las dos vistas y las restricciones descritas. Las seis tablas y rechazo_carga quedan en FNBC bajo las DF identificadas; no se identificó una tabla de negocio que quede solamente en 3FN. Las tablas de paso permanecen como estructuras auxiliares. La evidencia de ejecución está en la carpeta evidencias (salidas `.txt` reales).
 
 ### Comparación antes y después de la normalización
 
-Se restauró el respaldo original en una base independiente y se ejecutaron los cuatro reportes del Hito 2.
+Se restauró el respaldo original en una base independiente y se ejecutaron los cuatro reportes del Hito 2 (salidas en `evidencias/06_reportes_antes.txt` y `evidencias/07_reportes_despues.txt`).
 
 | Reporte | Antes | Después |
 |---|---:|---:|

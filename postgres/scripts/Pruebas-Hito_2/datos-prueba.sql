@@ -22,15 +22,15 @@ INSERT INTO ejemplar (isbn, id_ejemplar, tipo) VALUES
 ON CONFLICT (isbn,id_ejemplar) DO NOTHING;
 
 INSERT INTO prestamo (documento, isbn, id_ejemplar, fecha_prestamo, fecha_limite, fecha_devolucion)
-SELECT
+SELECT 
     v.documento,
     v.isbn,
     v.id_ejemplar,
     CURRENT_DATE - v.prestado                   AS fecha_prestamo,
     CURRENT_DATE - v.prestado + 14              AS fecha_limite,
-    CASE
-        WHEN v.devuelto IS NOT NULL THEN CURRENT_DATE - v.devuelto
-        ELSE NULL
+    CASE 
+        WHEN v.devuelto IS NOT NULL THEN CURRENT_DATE - v.devuelto 
+        ELSE NULL 
     END                                         AS fecha_devolucion
 FROM (VALUES
 

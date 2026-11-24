@@ -1,0 +1,32 @@
+SET
+==== F1. lector: correo -> documento (0 filas = sin contraejemplo)
+ correo | documentos 
+--------+------------
+(0 rows)
+
+==== F2. ejemplar: (isbn, id_ejemplar) -> tipo (0 filas = sin contraejemplo)
+ isbn | id_ejemplar | tipos 
+------+-------------+-------
+(0 rows)
+
+==== F3. libro: titulo -> isbn (0 filas en la muestra, pero NO se asume: dos ediciones pueden compartir titulo)
+ titulo | isbns 
+--------+-------
+(0 rows)
+
+==== F4. prestamo: (isbn, id_ejemplar) -> documento se REFUTA: una copia pasa por varios lectores
+     isbn      | id_ejemplar | lectores 
+---------------+-------------+----------
+ 9780000000001 |           1 |        2
+(1 row)
+
+==== F5. prestamo: (isbn, id_ejemplar, fecha_prestamo) como clave alterna? (0 filas = unica en la muestra)
+ isbn | id_ejemplar | fecha_prestamo | count 
+------+-------------+----------------+-------
+(0 rows)
+
+==== F6. libro: autor -> categoria (0 filas = sin contraejemplo; no se asume como DF)
+ autor | categorias 
+-------+------------
+(0 rows)
+
