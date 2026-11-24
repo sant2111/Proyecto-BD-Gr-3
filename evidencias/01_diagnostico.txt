@@ -1,0 +1,91 @@
+==== E1a. ejemplares_disponibles: resumen
+ libros | descuadrados
+--------+--------------
+     32 |           32
+(1 row)
+
+==== E1b. libros con ejemplares: guardado vs calculado
+     isbn      |             titulo              | guardado | ejemplares | abiertos | calculado
+---------------+---------------------------------+----------+------------+----------+-----------
+ 9780000000001 | Cien años de soledad            |        4 |          3 |        1 |         2
+ 9780000000003 | Crónica de una muerte anunciada |        2 |          1 |        1 |         0
+ 9780000000004 | Rayuela                         |        3 |          3 |        1 |         2
+ 9780000000005 | Pedro Páramo                    |        2 |          2 |        1 |         1
+ 9780000000007 | Ficciones                       |        2 |          2 |        1 |         1
+ 9780000000009 | Don Quijote de la Mancha        |        5 |          1 |        0 |         1
+ 9780000000010 | La sombra del viento            |        4 |          1 |        1 |         0
+ 9780000000011 | Como agua para chocolate        |        2 |          1 |        0 |         1
+(8 rows)
+
+==== E1c. libros con stock guardado pero sin filas en ejemplar
+ libros_sin_ejemplares_con_stock
+---------------------------------
+                              24
+(1 row)
+
+==== E2a. estado guardado vs calculado HOY
+ id_prestamo | guardado | calculado
+-------------+----------+-----------
+(0 rows)
+
+==== E2b. lo mismo dentro de 30 dias
+ id_prestamo | guardado | calculado_en_30_dias
+-------------+----------+----------------------
+           9 | activo   | en mora
+          12 | activo   | en mora
+(2 rows)
+
+==== E3a. columnas con el mismo nombre en usuario y lector
+ column_name
+-------------
+ telefono
+ correo
+(2 rows)
+
+==== E3b. llaves foraneas del esquema
+  tabla   |            conname             |                               definicion
+----------+--------------------------------+------------------------------------------------------------------------
+ usuario  | usuario_id_rol_fkey            | FOREIGN KEY (id_rol) REFERENCES rol(id_rol)
+ ejemplar | ejemplar_isbn_fkey             | FOREIGN KEY (isbn) REFERENCES libro(isbn) ON DELETE CASCADE
+ prestamo | prestamo_documento_fkey        | FOREIGN KEY (documento) REFERENCES lector(documento)
+ prestamo | prestamo_isbn_id_ejemplar_fkey | FOREIGN KEY (isbn, id_ejemplar) REFERENCES ejemplar(isbn, id_ejemplar)
+(4 rows)
+
+==== E4a. restricciones de prestamo y rol
+  tabla   |            conname             | contype |                               definicion
+----------+--------------------------------+---------+------------------------------------------------------------------------
+ rol      | rol_pkey                       | p       | PRIMARY KEY (id_rol)
+ prestamo | prestamo_documento_fkey        | f       | FOREIGN KEY (documento) REFERENCES lector(documento)
+ prestamo | prestamo_isbn_id_ejemplar_fkey | f       | FOREIGN KEY (isbn, id_ejemplar) REFERENCES ejemplar(isbn, id_ejemplar)
+ prestamo | prestamo_pkey                  | p       | PRIMARY KEY (id_prestamo)
+(4 rows)
+
+==== E4b. ejemplares con mas de un prestamo abierto
+ isbn | id_ejemplar | abiertos
+------+-------------+----------
+(0 rows)
+
+==== E5a. DF candidata autor -> categoria (solo se puede refutar)
+ autor | categorias
+-------+------------
+(0 rows)
+
+==== E5b. valores de ejemplar.tipo
+  tipo  | ejemplares
+--------+------------
+ Físico |         14
+(1 row)
+
+==== E5c. categorias repetidas como texto
+    categoria    | libros
+-----------------+--------
+ Novela          |     14
+ Infantil        |      3
+ Ciencia         |      3
+ Ciencia Ficción |      3
+ Fantasía        |      2
+ Cuento          |      2
+ Terror          |      2
+ Poesía          |      2
+ Historia        |      1
+(9 rows)

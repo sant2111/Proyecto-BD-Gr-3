@@ -1,4 +1,3 @@
-DROP SCHEMA IF EXISTS biblioteca CASCADE;
 CREATE SCHEMA biblioteca;
 SET search_path TO biblioteca;
 
@@ -8,14 +7,13 @@ CREATE TABLE libro (
     titulo                  varchar(200)  NOT NULL CHECK (titulo <> ''),
     autor                   varchar(120)  NOT NULL CHECK (autor <> ''),
     categoria               varchar(40)   NOT NULL CHECK (categoria <> ''),
-    anio_publicacion        smallint      NOT NULL CHECK (anio_publicacion BETWEEN 1450 AND 2100),
-    ejemplares_disponibles  integer       NOT NULL CHECK (ejemplares_disponibles >= 0)
+    anio_publicacion        smallint      NOT NULL CHECK (anio_publicacion BETWEEN 1450 AND 2100)
 );
 
 -- 2. RESTO DE TABLAS DEL MODELO
 CREATE TABLE rol (
     id_rol    integer PRIMARY KEY,
-    tipo_rol  varchar(255) NOT NULL
+    tipo_rol  varchar(255) NOT NULL UNIQUE
 );
 
 CREATE TABLE usuario (
@@ -55,7 +53,7 @@ CREATE TABLE prestamo (
     fecha_prestamo  date NOT NULL,
     fecha_limite    date NOT NULL,
     fecha_devolucion date,
-    estado          varchar(50) NOT NULL,
+    CONSTRAINT prestamo_fechas_ck CHECK (fecha_limite >= fecha_prestamo AND (fecha_devolucion IS NULL OR fecha_devolucion >= fecha_prestamo)),
     FOREIGN KEY (isbn, id_ejemplar) REFERENCES ejemplar(isbn, id_ejemplar)
 );
 
@@ -100,3 +98,7 @@ CREATE TABLE stg_lector (
     telefono TEXT,
     motivo TEXT
 );
+
+CREATE UNIQUE INDEX prestamo_abierto_uk ON prestamo(isbn,id_ejemplar) WHERE fecha_devolucion IS NULL;
+CREATE VIEW libro_disponibilidad AS SELECT l.isbn,l.titulo,l.autor,l.categoria,count(e.id_ejemplar)::integer AS ejemplares,count(p.id_prestamo)::integer AS prestados,(count(e.id_ejemplar)-count(p.id_prestamo))::integer AS disponibles FROM libro l LEFT JOIN ejemplar e ON e.isbn=l.isbn LEFT JOIN prestamo p ON p.isbn=e.isbn AND p.id_ejemplar=e.id_ejemplar AND p.fecha_devolucion IS NULL GROUP BY l.isbn;
+CREATE VIEW prestamo_con_estado AS SELECT p.*, CASE WHEN fecha_devolucion IS NOT NULL THEN 'devuelto' WHEN fecha_limite < CURRENT_DATE THEN 'en mora' ELSE 'activo' END AS estado FROM prestamo p;

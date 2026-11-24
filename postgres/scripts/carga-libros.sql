@@ -68,11 +68,13 @@ WHERE s.motivo IS NULL
 -- Insertar los nuevos
 INSERT INTO libro (
     isbn, titulo, autor, categoria,
-    anio_publicacion, ejemplares_disponibles
+    anio_publicacion
 )
-SELECT isbn, titulo, autor, categoria,
-       anio_publicacion, ejemplares_disponibles
+SELECT isbn, titulo, autor, categoria, anio_publicacion
 FROM tmp_libros_cargar;
+
+INSERT INTO ejemplar (isbn,id_ejemplar,tipo)
+SELECT l.isbn,g.id,'Físico' FROM tmp_libros_cargar l CROSS JOIN LATERAL generate_series(1,l.ejemplares_disponibles) AS g(id);
 
 -- Registrar únicamente errores reales
 INSERT INTO rechazo_carga (archivo, linea, contenido, motivo)

@@ -1,0 +1,8 @@
+Lectores: cargados 20 | rechazados 0
+Libros: cargadas 32 | rechazadas 0
+INSERT 0 94
+COMMIT
+
+ libros | lectores | ejemplares
+--------+----------+------------
+     32 |       20 |         94

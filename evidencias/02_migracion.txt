@@ -1,0 +1,56 @@
+==== ANTES
+ libros | lectores | ejemplares | prestamos | stock
+--------+----------+------------+-----------+-------
+     32 |       20 |         14 |        15 |    94
+(1 row)
+
+DO
+INSERT 0 80
+CREATE INDEX
+ALTER TABLE
+ALTER TABLE
+==== VERIFICACION ANTES DE ELIMINAR COLUMNAS
+ ejemplares_originales_perdidos
+--------------------------------
+                              0
+(1 row)
+
+ prestamos_modificados
+-----------------------
+                     0
+(1 row)
+
+ libros_modificados
+--------------------
+                  0
+(1 row)
+
+ stock_no_reconciliado
+-----------------------
+                     0
+(1 row)
+
+DO
+ALTER TABLE
+ALTER TABLE
+CREATE VIEW
+CREATE VIEW
+==== DESPUES
+ libros | lectores | ejemplares | prestamos
+--------+----------+------------+-----------
+     32 |       20 |         94 |        15
+(1 row)
+
+ ejemplares | prestados | disponibles | negativos
+------------+-----------+-------------+-----------
+         94 |         6 |          88 |         0
+(1 row)
+
+  estado  | count
+----------+-------
+ activo   |     2
+ devuelto |     9
+ en mora  |     4
+(3 rows)
+
+COMMIT

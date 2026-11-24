@@ -1,0 +1,24 @@
+Reporte 1: libros más prestados
+Cien años de soledad | 4
+Rayuela | 3
+Ficciones | 2
+Pedro Páramo | 2
+
+Reporte 2: lectores que más han leído
+Santiago | 3
+Mariana | 3
+
+Reporte 3: lectores morosos
+Camila Hernández Torres
+Valentina López Díaz
+Juan David Martínez Ruiz
+
+Reporte 4: préstamos vencidos
+Ficciones | 26 días
+La sombra del viento | 16 días
+Cien años de soledad | 6 días
+Pedro Páramo | 2 días
+
+ libros | lectores | ejemplares | prestamos
+--------+----------+------------+-----------
+     32 |       20 |         94 |        15
