@@ -1,0 +1,73 @@
+PS C:\Users\julio\Downloads\HITO 4\Proyecto-BD-Gr-3-main> docker compose exec postgres psql -U curso -d curso -f /scripts/carga-libros.sql
+SET
+BEGIN
+TRUNCATE TABLE
+COPY 33
+DELETE 1
+INSERT 0 32
+UPDATE 32
+UPDATE 0
+SELECT 32
+INSERT 0 32
+INSERT 0 94
+INSERT 0 0
+COMMIT
+ cargadas | rechazadas 
+----------+------------
+       32 |          0
+(1 row)
+
+ linea | motivo | contenido 
+-------+--------+-----------
+(0 rows)
+
+DROP TABLE
+PS C:\Users\julio\Downloads\HITO 4\Proyecto-BD-Gr-3-main> docker compose exec postgres psql -U curso -d curso -f /scripts/carga-lectores.sql
+SET
+BEGIN
+TRUNCATE TABLE
+COPY 21
+DELETE 1
+INSERT 0 20
+UPDATE 20
+UPDATE 0
+SELECT 20
+INSERT 0 20
+INSERT 0 0
+COMMIT
+ cargados | rechazados 
+----------+------------
+       20 |          0
+(1 row)
+
+ linea | motivo | contenido 
+-------+--------+-----------
+(0 rows)
+
+DROP TABLE
+PS C:\Users\julio\Downloads\HITO 4\Proyecto-BD-Gr-3-main> docker compose exec postgres psql -U curso -d curso -f /scripts/pruebas-programacion.sql
+SET
+ALTER TABLE
+SET
+BEGIN
+TRUNCATE TABLE
+INSERT 0 0
+INSERT 0 15
+COMMIT
+ALTER TABLE
+BEGIN
+UPDATE 3
+CALL
+ documento  |     isbn      | id_ejemplar | fecha_prestamo | fecha_limite 
+------------+---------------+-------------+----------------+--------------
+ 1000000006 | 9780000000004 |           1 | 2026-11-28     | 2026-12-12
+(1 row)
+
+psql:/scripts/pruebas-programacion.sql:59: NOTICE:  Correcto: El ejemplar 1 del libro 9780000000001 ya está prestado
+DO
+psql:/scripts/pruebas-programacion.sql:81: NOTICE:  Correcto: El lector 1000000003 tiene préstamos vencidos sin devolver
+DO
+psql:/scripts/pruebas-programacion.sql:102: NOTICE:  Correcto: El lector 1000000004 ya tiene el máximo de 3 préstamos abiertos
+DO
+ROLLBACK
+PS C:\Users\julio\Downloads\HITO 4\Proyecto-BD-Gr-3-main>
